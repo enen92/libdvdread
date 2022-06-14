@@ -32,6 +32,7 @@ libdvdread_la_SOURCES = \
 	src/md5.h \
 	src/nav_print.c \
 	src/nav_read.c \
+    src/dir_posix.c \
 	msvc/contrib/win32_cs.h
 
 libdvdread_la_LIBADD = $(CSS_LIBS)
@@ -50,6 +51,7 @@ pkginclude_HEADERS = \
 	src/dvdread/nav_print.h \
 	src/dvdread/nav_read.h \
 	src/dvdread/nav_types.h \
+	src/dvdread/dvd_filesystem.h \
 	src/dvdread/version.h
 
 pkgconfigdir = $(libdir)/pkgconfig
