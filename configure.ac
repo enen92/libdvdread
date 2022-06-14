@@ -77,6 +77,9 @@ AC_ARG_ENABLE([dlfcn],
   [use_builtin_dlfcn=$enableval],
   [use_builtin_dlfcn=no])
 
+# for filesystem/dir access
+AC_CHECK_HEADERS([dirent.h])
+
 AS_IF([test x"$with_libdvdcss" = "xyes"], [
   CSS_REQUIRES="libdvdcss >= 1.2"
   PKG_CHECK_MODULES([CSS], [$CSS_REQUIRES])
