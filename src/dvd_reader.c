@@ -350,7 +350,7 @@ static dvd_reader_device_t *DVDOpenImageFile( dvd_reader_t *ctx,
     dvdinput_close(dev);
     return NULL;
   }
-  dvd->isImageFile = 1;
+  dvd->isImageFile = 0;
   dvd->dev = dev;
 
   dvd->udfcache_level = DEFAULT_UDF_CACHE_LEVEL;
