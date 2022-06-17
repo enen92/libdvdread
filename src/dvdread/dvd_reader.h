@@ -47,6 +47,12 @@
 #include "version.h"
 
 /**
+ * Filesystem types
+ */
+#include "dvd_filesystem.h"
+
+
+/**
  * The length of one Logical Block of a DVD.
  */
 #define DVD_VIDEO_LB_LEN 2048
@@ -104,9 +110,9 @@ typedef struct
  * Public type that is used to provide statistics on a handle.
  */
 typedef struct {
-  off_t size;          /**< Total size of file in bytes */
+  int64_t size;          /**< Total size of file in bytes */
   int nr_parts;        /**< Number of file parts */
-  off_t parts_size[9]; /**< Size of each part in bytes */
+  int64_t parts_size[9]; /**< Size of each part in bytes */
 } dvd_stat_t;
 
 /**
