@@ -22,15 +22,8 @@
 #include "config.h"                  /* Required for HAVE_DVDCSS_DVDCSS_H */
 #include <stdio.h>                               /* fprintf */
 #include <stdlib.h>                              /* free */
-#include <fcntl.h>                               /* open */
-#include <unistd.h>                              /* lseek */
 #include <string.h>                  /* strerror */
 #include <errno.h>
-
-#ifdef _WIN32
-#include <windows.h>
-#include "../msvc/contrib/win32_cs.h"
-#endif
 
 #include "dvdread/dvd_reader.h"      /* DVD_VIDEO_LB_LEN */
 #include "dvdread_internal.h"
@@ -40,7 +33,8 @@
 
 /* The function pointers that is the exported interface of this file. */
 dvd_input_t (*dvdinput_open)  (void *, dvd_logger_cb *,
-                               const char *,dvd_reader_stream_cb *);
+                               const char *, dvd_reader_stream_cb *,
+                               dvd_reader_filesystem *);
 int         (*dvdinput_close) (dvd_input_t);
 int         (*dvdinput_seek)  (dvd_input_t, int);
 int         (*dvdinput_title) (dvd_input_t, int);
@@ -77,22 +71,6 @@ static int      (*DVDcss_read)  (dvdcss_t, void *, int, int);
 #define DVDCSS_SEEK_KEY (1 << 1)
 #endif
 
-#ifdef _WIN32
-static int open_win32(const char *path, int flags)
-{
-  wchar_t *wpath;
-  int      fd;
-
-  wpath = _utf8_to_wchar(path);
-  if (!wpath) {
-    return -1;
-  }
-  fd = _wopen(wpath, flags);
-  free(wpath);
-  return fd;
-}
-#endif
-
 /* The DVDinput handle, add stuff here for new input methods. */
 struct dvd_input_s {
   /* libdvdcss handle */
@@ -101,8 +79,8 @@ struct dvd_input_s {
   void *priv;
   dvd_logger_cb *logcb;
 
-  /* dummy file input */
-  int fd;
+  /* file input */
+  dvd_file_h* file;
 };
 
 static dvd_input_t dvd_input_New(void *priv, dvd_logger_cb *logcb)
@@ -121,7 +99,8 @@ static dvd_input_t dvd_input_New(void *priv, dvd_logger_cb *logcb)
  */
 static dvd_input_t css_open(void *priv, dvd_logger_cb *logcb,
                             const char *target,
-                            dvd_reader_stream_cb *stream_cb)
+                            dvd_reader_stream_cb *stream_cb,
+                            dvd_reader_filesystem *fs UNUSED)
 {
   dvd_input_t dev;
 
@@ -199,7 +178,8 @@ static int css_close(dvd_input_t dev)
  */
 static dvd_input_t file_open(void *priv, dvd_logger_cb *logcb,
                              const char *target,
-                             dvd_reader_stream_cb *stream_cb UNUSED)
+                             dvd_reader_stream_cb *stream_cb UNUSED,
+                             dvd_reader_filesystem *fs)
 {
   dvd_input_t dev;
 
@@ -214,14 +194,8 @@ static dvd_input_t file_open(void *priv, dvd_logger_cb *logcb,
   }
 
   /* Open the device */
-#if defined(_WIN32)
-  dev->fd = open_win32(target, O_RDONLY | O_BINARY);
-#elif defined(__OS2__)
-  dev->fd = open(target, O_RDONLY | O_BINARY);
-#else
-  dev->fd = open(target, O_RDONLY);
-#endif
-  if(dev->fd < 0) {
+  dev->file = fs->file_open(target, "rb");
+  if(!dev->file) {
     char buf[256];
 #if defined(HAVE_STRERROR_R) && defined(HAVE_DECL_STRERROR_R)
   #ifdef STRERROR_R_CHAR_P
@@ -254,9 +228,9 @@ static dvd_input_t file_open(void *priv, dvd_logger_cb *logcb,
  */
 static int file_seek(dvd_input_t dev, int blocks)
 {
-  off_t pos;
+  int64_t pos;
 
-  pos = lseek(dev->fd, (off_t)blocks * (off_t)DVD_VIDEO_LB_LEN, SEEK_SET);
+  pos = dev->file->seek(dev->file, blocks * (int64_t)DVD_VIDEO_LB_LEN, SEEK_SET);
   if(pos < 0) {
     return pos;
   }
@@ -284,7 +258,7 @@ static int file_read(dvd_input_t dev, void *buffer, int blocks,
   bytes = 0;
 
   while(len > 0) {
-    ssize_t ret = read(dev->fd, ((char*)buffer) + bytes, len);
+    ssize_t ret = dev->file->read(dev->file, ((char*)buffer) + bytes, len);
 
     if(ret < 0) {
       /* One of the reads failed, too bad.  We won't even bother
@@ -296,11 +270,11 @@ static int file_read(dvd_input_t dev, void *buffer, int blocks,
     if(ret == 0) {
       /* Nothing more to read.  Return all of the whole blocks, if any.
        * Adjust the file position back to the previous block boundary. */
-      off_t over_read = -(bytes % DVD_VIDEO_LB_LEN);
-      off_t pos = lseek(dev->fd, over_read, SEEK_CUR);
+      int64_t over_read = -(bytes % DVD_VIDEO_LB_LEN);
+      int64_t pos = dev->file->seek(dev->file, over_read, SEEK_CUR);
       if(pos % 2048 != 0)
           DVDReadLog(dev->priv, dev->logcb, DVD_LOGGER_LEVEL_WARN,
-                     "lseek not multiple of 2048! Something is wrong!");
+                     "seek not multiple of 2048! Something is wrong!");
       return (int) (bytes / DVD_VIDEO_LB_LEN);
     }
 
@@ -318,7 +292,7 @@ static int file_close(dvd_input_t dev)
 {
   int ret;
 
-  ret = close(dev->fd);
+  ret = dev->file->close(dev->file);
 
   free(dev);
 

@@ -23,13 +23,6 @@
 #ifndef LIBDVDREAD_DVD_READER_H
 #define LIBDVDREAD_DVD_READER_H
 
-#ifdef _MSC_VER
-#include <config.h>
-
-#include <stdio.h>
-#include <stdlib.h>
-#endif
-
 #include <sys/types.h>
 #include <inttypes.h>
 #include <stdarg.h>
@@ -45,6 +38,12 @@
  * The current version.
  */
 #include "version.h"
+
+/**
+ * Filesystem types
+ */
+#include "dvd_filesystem.h"
+
 
 /**
  * The length of one Logical Block of a DVD.
@@ -104,9 +103,9 @@ typedef struct
  * Public type that is used to provide statistics on a handle.
  */
 typedef struct {
-  off_t size;          /**< Total size of file in bytes */
+  int64_t size;          /**< Total size of file in bytes */
   int nr_parts;        /**< Number of file parts */
-  off_t parts_size[9]; /**< Size of each part in bytes */
+  int64_t parts_size[9]; /**< Size of each part in bytes */
 } dvd_stat_t;
 
 /**
