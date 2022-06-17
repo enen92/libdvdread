@@ -47,6 +47,12 @@
 #include "version.h"
 
 /**
+ * Filesystem types
+ */
+#include "dvd_filesystem.h"
+
+
+/**
  * The length of one Logical Block of a DVD.
  */
 #define DVD_VIDEO_LB_LEN 2048

@@ -57,7 +57,8 @@ typedef struct dvd_input_s *dvd_input_t;
  */
 extern dvd_input_t (*dvdinput_open)  (void *, dvd_logger_cb *,
                                       const char *,
-                                      dvd_reader_stream_cb *);
+                                      dvd_reader_stream_cb *,
+                                      dvd_reader_filesystem *);
 extern int         (*dvdinput_close) (dvd_input_t);
 extern int         (*dvdinput_seek)  (dvd_input_t, int);
 extern int         (*dvdinput_title) (dvd_input_t, int);
