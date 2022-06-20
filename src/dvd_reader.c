@@ -586,7 +586,7 @@ static dvd_reader_t *DVDOpenCommon( void *priv,
     mntfile = fopen( _PATH_MOUNTED, "r" );
     if( mntfile ) {
 
-#ifdef HAVE_GETMNTENT_R
+#if 0
       struct mntent *me, mbuf;
       char buf [8192];
       while( ( me = getmntent_r( mntfile, &mbuf, buf, sizeof(buf) ) ) ) {
