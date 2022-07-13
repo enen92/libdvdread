@@ -388,26 +388,6 @@ int dvdinput_setup(void *priv, dvd_logger_cb *logcb)
   }
 #endif /* HAVE_DVDCSS_DVDCSS_H */
 
-  if(dvdcss_library != NULL) {
-    /*
-    char *psz_method = getenv( "DVDCSS_METHOD" );
-    char *psz_verbose = getenv( "DVDCSS_VERBOSE" );
-    fprintf(stderr, "DVDCSS_METHOD %s\n", psz_method);
-    fprintf(stderr, "DVDCSS_VERBOSE %s\n", psz_verbose);
-    */
-
-    /* libdvdcss wrapper functions */
-    dvdinput_open  = css_open;
-    dvdinput_close = css_close;
-    dvdinput_seek  = css_seek;
-    dvdinput_title = css_title;
-    dvdinput_read  = css_read;
-    return 1;
-
-  } else {
-    DVDReadLog(priv, logcb, DVD_LOGGER_LEVEL_WARN,
-               "Encrypted DVD support unavailable.");
-
     /* libdvdcss replacement functions */
     dvdinput_open  = file_open;
     dvdinput_close = file_close;
@@ -415,5 +395,4 @@ int dvdinput_setup(void *priv, dvd_logger_cb *logcb)
     dvdinput_title = file_title;
     dvdinput_read  = file_read;
     return 0;
-  }
 }
