@@ -16,9 +16,6 @@
  * License along with this library. If not, see
  * <http://www.gnu.org/licenses/>.
  */
-#if HAVE_CONFIG_H
-#include "config.h"
-#endif
 
 #include <stdlib.h>
 #include <string.h>
@@ -26,21 +23,16 @@
 #include <stdio.h>
 #include <errno.h>
 
-
 #include <sys/stat.h>
 #include <fcntl.h>
 
+#include <windows.h>
+#include "../msvc/contrib/win32_cs.h"
+
 #include <dvdread/dvd_filesystem.h>
 
-#ifdef __ANDROID__
-# undef  lseek
-# define lseek lseek64
-# undef  off_t
-# define off_t off64_t
-#endif
 
-
-static int64_t _file_close(dvd_file_h *file)
+static int64_t _file_close_win32(dvd_file_h *file)
 {
     if (file) {
         int64_t ret = close((int)(intptr_t)file->internal);
@@ -50,16 +42,16 @@ static int64_t _file_close(dvd_file_h *file)
     return 0;
 }
 
-static int64_t _file_seek(dvd_file_h *file, int64_t offset, int32_t origin)
+static int64_t _file_seek_win32(dvd_file_h *file, int64_t offset, int32_t origin)
 {
-    off_t result = lseek((int)(intptr_t)file->internal, offset, origin);
+    off_t result = _lseeki64((int)(intptr_t)file->internal, offset, origin);
     if (result == (off_t)-1) {
         return -1;
     }
     return (int64_t)result;
 }
 
-static int64_t _file_read(dvd_file_h *file, char *buf, int64_t size)
+static int64_t _file_read_win32(dvd_file_h *file, char *buf, int64_t size)
 {
     ssize_t got, result;
 
@@ -83,33 +75,23 @@ static int64_t _file_read(dvd_file_h *file, char *buf, int64_t size)
 }
 
 
-static dvd_file_h* _file_open(const char* filename, const char *cmode)
+static dvd_file_h* _file_open_win32(const char* filename, const char *cmode)
 {
     dvd_file_h *file;
     int fd    = -1;
-    int flags = 0;
-    int mode  = 0;
+    wchar_t *wpath;
 
-    if (strchr(cmode, 'w')) {
-        flags = O_WRONLY | O_CREAT | O_TRUNC;
-        mode  = S_IRUSR | S_IWUSR;
-    } else {
-        #if defined(__OS2__)
-        flags = O_RDONLY | O_BINARY;
-        #else
-        flags = O_RDONLY;
-        #endif
-    }
-
-#ifdef O_CLOEXEC
-    flags |= O_CLOEXEC;
-#endif
-#ifdef O_BINARY
-    flags |= O_BINARY;
-#endif
-
-    if ((fd = open(filename, flags, mode)) < 0) {
+    wpath = _utf8_to_wchar(filename);
+    if (!wpath) {
         return NULL;
+    }
+    if (strchr(cmode, 'w')) {
+        // write is not supported/needed
+        free(wpath);
+        return NULL;
+    } else {
+        fd = _wopen(wpath, O_RDONLY | O_BINARY);
+        free(wpath);
     }
 
     file = calloc(1, sizeof(dvd_file_h));
@@ -118,17 +100,17 @@ static dvd_file_h* _file_open(const char* filename, const char *cmode)
         return NULL;
     }
 
-    file->close = _file_close;
-    file->read = _file_read;
-    file->seek  = _file_seek;
+    file->close = _file_close_win32;
+    file->read = _file_read_win32;
+    file->seek  = _file_seek_win32;
     file->internal = (void*)(intptr_t)fd;
 
     return file;
 }
 
-dvd_file_h* (*file_open)(const char* filename, const char *mode) = _file_open;
+dvd_file_h* (*file_open)(const char* filename, const char *mode) = _file_open_win32;
 
 dvd_reader_file_open file_open_default(void)
 {
-    return _file_open;
+    return _file_open_win32;
 }

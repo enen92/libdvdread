@@ -56,10 +56,6 @@
 #include "dvdread/ifo_read.h"
 #include "file/filesystem.h"
 
-#if defined(_WIN32)
-# include <windows.h>
-# include "msvc/contrib/win32_cs.h"
-#endif
 
 /* misc win32 helpers */
 
@@ -77,102 +73,6 @@ static inline int _private_gettimeofday( struct timeval *tv, void *tz )
 }
 #  define gettimeofday(TV, TZ) _private_gettimeofday((TV), (TZ))
 # endif
-#endif /* _WIN32 */
-
-/* Compat wrapper for stat() */
-
-#if defined(_WIN32)
-/* can't re-define stat (used in both function name and struct name) */
-typedef struct _stat64 dvdstat_t;
-static inline int dvdstat(const char *path, dvdstat_t *st)
-{
-  wchar_t *wpath, *it;
-  int ret;
-
-  wpath = _utf8_to_wchar(path);
-  if (!wpath) {
-    return -1;
-  }
-
-  /* need to strip possible trailing \\ */
-  for (it = wpath; *it; it++)
-    if ((*it == '\\' || *it == '/') && *(it+1) == 0)
-      *it = 0;
-
-  ret = _wstat64(wpath, st);
-  free(wpath);
-  return ret;
-}
-#endif
-
-#if defined(_WIN32)
-/* UTF-8 aware version of opendir()/readdir() */
-
-#include <io.h>
-
-typedef struct {
-  intptr_t handle;
-  struct _wfinddata_t went;
-  struct dirent ent;
-} win32_dir_t;
-
-win32_dir_t *win32_opendir(const char *path)
-{
-  char    *filespec;
-  wchar_t *wfilespec;
-  win32_dir_t *d;
-
-  d = calloc(1, sizeof(*d));
-  if (!d)
-    return NULL;
-
-  filespec = malloc(strlen(path) + 3);
-  if (!filespec) {
-    goto fail;
-  }
-  sprintf(filespec, "%s\\*", path);
-
-  wfilespec = _utf8_to_wchar(filespec);
-  free(filespec);
-  if (!wfilespec) {
-    goto fail;
-  }
-
-  d->handle = _wfindfirst(wfilespec, &d->went);
-  free(wfilespec);
-  if (d->handle != -1) {
-    return d;
-  }
-
- fail:
-  free(d);
-  return NULL;
-}
-
-static struct dirent *win32_readdir(win32_dir_t *dir)
-{
-  if (dir->went.name[0]) {
-    if (!WideCharToMultiByte(CP_UTF8, 0, dir->went.name, -1, dir->ent.d_name, sizeof(dir->ent.d_name), NULL, NULL))
-      dir->ent.d_name[0] = 0; /* allow reading next */
-    dir->went.name[0] = 0;
-    _wfindnext(dir->handle, &dir->went);
-    return &dir->ent;
-  }
-
-  return NULL;
-}
-
-static void win32_closedir(win32_dir_t *dir)
-{
-  _findclose(dir->handle);
-  free(dir);
-}
-
-#define DIR       win32_dir_t
-#define opendir   win32_opendir
-#define readdir   win32_readdir
-#define closedir  win32_closedir
-
 #endif /* _WIN32 */
 
 #define DEFAULT_UDF_CACHE_LEVEL 1

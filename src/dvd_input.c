@@ -25,11 +25,6 @@
 #include <string.h>                  /* strerror */
 #include <errno.h>
 
-#ifdef _WIN32
-#include <windows.h>
-#include "../msvc/contrib/win32_cs.h"
-#endif
-
 #include "dvdread/dvd_reader.h"      /* DVD_VIDEO_LB_LEN */
 #include "dvdread_internal.h"
 #include "dvd_input.h"
@@ -74,22 +69,6 @@ static int      (*DVDcss_close) (dvdcss_t);
 static int      (*DVDcss_seek)  (dvdcss_t, int, int);
 static int      (*DVDcss_read)  (dvdcss_t, void *, int, int);
 #define DVDCSS_SEEK_KEY (1 << 1)
-#endif
-
-#ifdef _WIN32
-static int open_win32(const char *path, int flags)
-{
-  wchar_t *wpath;
-  int      fd;
-
-  wpath = _utf8_to_wchar(path);
-  if (!wpath) {
-    return -1;
-  }
-  fd = _wopen(wpath, flags);
-  free(wpath);
-  return fd;
-}
 #endif
 
 /* The DVDinput handle, add stuff here for new input methods. */
@@ -215,11 +194,7 @@ static dvd_input_t file_open(void *priv, dvd_logger_cb *logcb,
   }
 
   /* Open the device */
-#if defined(_WIN32)
-  dev->fd = open_win32(target, O_RDONLY | O_BINARY);
-#else
   dev->file = fs->file_open(target, "rb");
-#endif
   if(!dev->file) {
     char buf[256];
 #if defined(HAVE_STRERROR_R) && defined(HAVE_DECL_STRERROR_R)

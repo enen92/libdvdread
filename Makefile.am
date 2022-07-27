@@ -37,8 +37,10 @@ libdvdread_la_SOURCES = \
 	src/file/filesystem.h
 
 if HAVE_WIN32
-#libdvdread_la_SOURCES+= \
-#FIXME TODO WINDOWS stuff
+libdvdread_la_SOURCES+= \
+	src/file/dir_win32.c \
+	src/file/file_win32.c \
+	src/file/stat_win32.c
 else
 libdvdread_la_SOURCES+= \
 	src/file/dir_posix.c \

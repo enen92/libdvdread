@@ -111,7 +111,7 @@ AS_IF([test "x$DOXYGEN" = "x"], [
   ])
 ])
 AM_CONDITIONAL([APIDOC], [test "x$DOXYGEN" != "x" && test "x$enable_apidoc" = "xyes"])
-AM_CONDITIONAL(HAVE_WIN32, test "${SYS}" = "mingw32" || test "${SYS}" = "cygwin" )
+AM_CONDITIONAL(HAVE_WIN32, test "${host}" = "x86_64-w64-mingw32" || test "${host}" = "i686-w64-mingw32")
 
 AS_IF([test "x$ac_cv_c_compiler_gnu" = "xyes"], [
   AC_DEFINE([UNUSED], [__attribute__((unused))], [Unused parameter annotation])
