@@ -20,7 +20,7 @@
 #include <io.h>
 #include <stdlib.h>
 #include <string.h>
-#include <stdio.h>
+//#include <stdio.h>
 
 #include <windows.h>
 #include "../msvc/contrib/win32_cs.h"
@@ -79,7 +79,7 @@ static dvd_dir_h *_dir_open_win32(const char* dirname)
     if (!filespec) {
         goto fail;
     }
-    sprintf(filespec, "%s\\*", dirname);
+    //sprintf(filespec, "%s\\*", dirname);
 
     wfilespec = _utf8_to_wchar(filespec);
     free(filespec);
