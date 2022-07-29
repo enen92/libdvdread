@@ -29,6 +29,7 @@
 #include <malloc.h>
 #include <errno.h>
 #include <direct.h>
+#include <io.h>
 
 #include <config.h>
 
@@ -59,9 +60,6 @@
 #ifndef strncasecmp
 #define strncasecmp _strnicmp
 #endif
-
-#define snprintf _snprintf
-#define vsnprintf _vsnprintf
 
 // FIXME : I don't remember why this is here
 #define readlink
