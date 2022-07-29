@@ -44,8 +44,8 @@ static int64_t _file_close_win32(dvd_file_h *file)
 
 static int64_t _file_seek_win32(dvd_file_h *file, int64_t offset, int32_t origin)
 {
-    off64_t result = _lseeki64((int)(intptr_t)file->internal, offset, origin);
-    if (result == (off64_t)-1) {
+    off_t result = _lseeki64((int)(intptr_t)file->internal, offset, origin);
+    if (result == (off_t)-1) {
         return -1;
     }
     return (int64_t)result;
