@@ -30,6 +30,12 @@
 #include <limits.h>         /* PATH_MAX */
 #include <ctype.h>          /* isalpha */
 
+#ifndef WIN32
+#if defined(WINAPI_FAMILY) && (WINAPI_FAMILY == WINAPI_FAMILY_APP)
+#define getenv(x) NULL
+#endif
+#endif
+
 #if defined(__FreeBSD__) || defined(__OpenBSD__) || defined(__NetBSD__) || defined(__bsdi__) || defined(__APPLE__)
 # define SYS_BSD 1
 #endif
