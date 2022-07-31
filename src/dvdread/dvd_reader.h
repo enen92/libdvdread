@@ -103,9 +103,9 @@ typedef struct
  * Public type that is used to provide statistics on a handle.
  */
 typedef struct {
-  int64_t size;          /**< Total size of file in bytes */
+  off_t size;          /**< Total size of file in bytes */
   int nr_parts;        /**< Number of file parts */
-  int64_t parts_size[9]; /**< Size of each part in bytes */
+  off_t parts_size[9]; /**< Size of each part in bytes */
 } dvd_stat_t;
 
 /**
